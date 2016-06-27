@@ -51,48 +51,14 @@ WORKDIR /tmp
 # Download and install shiny server
 
 
-# RUN wget --no-verbose https://s3.amazonaws.com/rstudio-shiny-server-os-build/ubuntu-12.04/x86_64/VERSION -O "version.txt" && \
-#     VERSION=$(cat version.txt)  && \
-#     wget --no-verbose "https://s3.amazonaws.com/rstudio-shiny-server-os-build/ubuntu-12.04/x86_64/shiny-server-$VERSION-amd64.deb" -O ss-latest.deb && \
-#     gdebi -n ss-latest.deb && \
-#     rm -f version.txt ss-latest.deb
+RUN wget --no-verbose https://s3.amazonaws.com/rstudio-shiny-server-os-build/ubuntu-12.04/x86_64/VERSION -O "version.txt" && \
+    VERSION=$(cat version.txt)  && \
+    wget --no-verbose "https://s3.amazonaws.com/rstudio-shiny-server-os-build/ubuntu-12.04/x86_64/shiny-server-$VERSION-amd64.deb" -O ss-latest.deb && \
+    gdebi -n ss-latest.deb && \
+    rm -f version.txt ss-latest.deb
 
 
-# Clone the repository from GitHub
-RUN git clone https://github.com/rstudio/shiny-server.git
 
-# Get into a temporary directory in which we'll build the project
-RUN cd shiny-server
-RUN mkdir tmp
-RUN cd tmp
-
-# Add the bin directory to the path so we can reference node
-RUN DIR=`pwd`
-RUN PATH=$DIR/../bin:$PATH
-
-# See the "Python" section below if your default python version is not 2.6 or 2.7.
-RUN PYTHON=`which python`
-
-# Check the version of Python. If it's not 2.6.x or 2.7.x, see the Python section below.
-RUN $PYTHON --version
-
-# Use cmake to prepare the make step. Modify the "--DCMAKE_INSTALL_PREFIX"
-# if you wish the install the software at a different location.
-RUN cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DPYTHON="$PYTHON" ../
-# Get an error here? Check the "How do I set the cmake Python version?" question below
-
-# Recompile the npm modules included in the project
-RUN make
-RUN mkdir ../build
-RUN  (cd .. && ./bin/npm --python="$PYTHON" rebuild)
-# Need to rebuild our gyp bindings since 'npm rebuild' won't run gyp for us.
-RUN (cd .. && ./bin/node ./ext/node/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js --python="$PYTHON" rebuild)
-
-# Install the software at the predefined location
-RUN  make install
-
-# Place a shortcut to the shiny-server executable in /usr/bin
-RUN  ln -s /usr/local/shiny-server/bin/shiny-server /usr/bin/shiny-server
 
 #Install packages
 
